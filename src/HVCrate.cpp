@@ -5,40 +5,40 @@
 HVCrate::HVCrate()
 {
 
-  // Connection
-  fConnString = "_9600_8_1_none_0";
-  fPort = 0;
-  fHandle = -1;
+	// Connection
+	fConnString = "_9600_8_1_none_0";
+	fPort = 0;
+	fHandle = -1;
 
-  // System Type N1470
-  fSystem = (CAENHV_SYSTEM_TYPE_t)6;
-  // Link type USB VCP
-  fLinkType = 5;
+	// System Type N1470
+	fSystem = (CAENHV_SYSTEM_TYPE_t)6;
+	// Link type USB VCP
+	fLinkType = 5;
 
-  // Number of channels
-  // Will worry about daisy-chain later
-  fNCh = 4;
-  fCh = new ushort[fNCh];
-
-
-  // Debug status
-  fDebug = false;
-  
-  for (int i = 0; i < fNCh; i++)
-    {
-      fCh[i] = (ushort)i;
-    }
+	// Number of channels
+	// Will worry about daisy-chain later
+	fNCh = 4;
+	fCh = new ushort[fNCh];
 
 
+	// Debug status
+	fDebug = false;
 
-  fParList.push_back("Pw");
-  fParList.push_back("ISet");
-  fParList.push_back("IMon");
-  fParList.push_back("VSet");
-  fParList.push_back("VMon");
-  fParList.push_back("MaxV");
-  
-  fNParList = fParList.size();
+	for (int i = 0; i < fNCh; i++)
+	{
+		fCh[i] = (ushort)i;
+	}
+
+
+
+	fParList.push_back("Pw");
+	fParList.push_back("ISet");
+	fParList.push_back("IMon");
+	fParList.push_back("VSet");
+	fParList.push_back("VMon");
+	fParList.push_back("MaxV");
+
+	fNParList = fParList.size();
 }
 
 
@@ -46,15 +46,8 @@ HVCrate::HVCrate()
 
 void HVCrate::SetPort(const char *port)
 {
-  /*
-    I don't know why this delete doesn't work...
-    if (fPort)
-    {
-    delete[] fPort;
-    }
-  */
-  fPort = new char[strlen(port) +1];
-  strcpy(fPort, port);
+	fPort = new char[strlen(port) +1];
+	strcpy(fPort, port);
 }
 
 // Read the port number from a config file
@@ -62,60 +55,60 @@ void HVCrate::SetPort(const char *port)
 void HVCrate::ReadConfigFile(char *filename)
 {
   
-  int ival;
-  FILE* iconfigFile=fopen("./config","r");
-  char inbuff[256];
-  fscanf(iconfigFile, "%s %d\n", &inbuff[0], &ival);
-  fPort[6] = ival + '0';
+	int ival;
+	FILE* iconfigFile=fopen("./config","r");
+	char inbuff[256];
+	fscanf(iconfigFile, "%s %d\n", &inbuff[0], &ival);
+	fPort[6] = ival + '0';
 }
 
 // Write the string for connection to HV Crate
 char * HVCrate::WriteConnectionString()
 {
-  char * iConnection = new char[strlen(fPort)+strlen(fConnString)+1];
-  
-  // Copy the port to the connection string
-  strcpy(iConnection, fPort);
-  // Append string with the rest of the connection
-  strcat(iConnection, fConnString);
+	char * iConnection = new char[strlen(fPort)+strlen(fConnString)+1];
 
-  return iConnection;
+	// Copy the port to the connection string
+	strcpy(iConnection, fPort);
+	// Append string with the rest of the connection
+	strcat(iConnection, fConnString);
+
+	return iConnection;
 }
 
 
 // INitiate the crate
 bool HVCrate::InitCrate()
 {
-  char *iConnection = WriteConnectionString();
+	char *iConnection = WriteConnectionString();
 
-  // Initiate system
-  fRet = CAENHV_InitSystem(fSystem,
-			  fLinkType,
-			  iConnection,
-			  "",
-			  "",
-			   &fHandle);
+	// Initiate system
+	fRet = CAENHV_InitSystem(fSystem,
+							fLinkType,
+							iConnection,
+							"",
+							"",
+							&fHandle);
 
 
-  // Check if connected ok
-  if (fRet != CAENHV_OK)
-    {
+	// Check if connected ok
+	if (fRet != CAENHV_OK)
+	{
 
-      /*
+		/*
 
-	To Do
-	Write class with easy to read error messages
-      
-      */
-      cout << "CAENHV_InitSystem: "
-	   << CAENHV_GetError(fHandle)
-	   << " " << fRet << endl;
-      
-      return false;
-    }
+		To Do
+		Write class with easy to read error messages
 
-  cout << "Connected Successfully" << endl;
-  return true;
+		*/
+		cout << "CAENHV_InitSystem: "
+		<< CAENHV_GetError(fHandle)
+		<< " " << fRet << endl;
+
+		return false;
+	}
+
+	cout << "Connected Successfully" << endl;
+	return true;
   
 }
 
@@ -123,141 +116,141 @@ bool HVCrate::InitCrate()
 // Check if parameter is valid
 bool HVCrate::ValidParm(const char *parm)
 {
-  for (int i = 0 ; i <fNParList ; i ++)
-    {
-      if (strcmp (parm, fParList[i]))
+	for (int i = 0 ; i <fNParList ; i ++)
 	{
-	  return true;
+		if (strcmp (parm, fParList[i]))
+		{
+			return true;
+		}
 	}
-    }
-  return false;
+	return false;
 }
 
 // Get the channel parameters
 float HVCrate::GetChannelParameter(unsigned short  ch, const char *parm)
 {
-  float iparm = -1;
-  if ( ValidParm(parm) )
-    {
-      fRet = CAENHV_GetChParam(fHandle,
-			       0,
-			       parm,
-			       1,
-			       &fCh[ch],
-			       &iparm);
-      if (fRet != CAENHV_OK)
+	float iparm = -1;
+	if ( ValidParm(parm) )
 	{
-	  
-	  cout << "CAENHV_GetChParam: "
-	       << CAENHV_GetError(fHandle)
-	       << "(num. " << fRet << ")\n" ;
-	  return -1;
+		fRet = CAENHV_GetChParam(fHandle,
+									0,
+									parm,
+									1,
+									&fCh[ch],
+									&iparm);
+		if (fRet != CAENHV_OK)
+		{
+
+			cout << "CAENHV_GetChParam: "
+				 << CAENHV_GetError(fHandle)
+				 << "(num. " << fRet << ")\n" ;
+			return -1;
+		}
 	}
-    }
-  else
-    {
-      cout << "Invalid Parameter" << endl;
-    }
- 
+	else
+	{
+		cout << "Invalid Parameter" << endl;
+	}
+
   return iparm;
 }
 
 bool HVCrate::SetChannelParameter(unsigned short  ch, const char *parm, float value)
 {
 
-  float pass[1] = {value};
-  if ( ValidParm(parm) )
-    {
-      fRet = CAENHV_SetChParam(fHandle,
-			       0,
-			       parm,
-			       1,
-			       &fCh[ch],
-			       &pass);
-
-      if (fRet != CAENHV_OK)
+	float pass[1] = {value};
+	if ( ValidParm(parm) )
 	{
-	  
-	  cout << "CAENHV_SetChParam: "
-	       << CAENHV_GetError(fHandle)
-	       << "(num. " << fRet << ")\n" ;
-	  return false;
+		fRet = CAENHV_SetChParam(fHandle,
+					0,
+					parm,
+					1,
+					&fCh[ch],
+					&pass);
+
+		if (fRet != CAENHV_OK)
+		{
+
+			cout << "CAENHV_SetChParam: "
+				 << CAENHV_GetError(fHandle)
+				 << "(num. " << fRet << ")\n" ;
+			return false;
+		}
+		return true;
 	}
-      return true;
-    }
-  else
-    {
-      cout << "Invalid Parameter" << endl;
-      return false;
-    }
+	else
+	{
+		cout << "Invalid Parameter" << endl;
+		return false;
+	}
 
 
 }
 
 
 
-
+// Function to print out the status and values of the HVCrate
 void HVCrate::PrintHVStatus()
 {
-  float *fvalues = new float[fNParList];
-  for (int i = 0; i < fNParList ;  i++)
-    {
-      cout << fParList[i] << "\t" ;
-    }
-  cout << endl;
+	float *fvalues = new float[fNParList];
+	for (int i = 0; i < fNParList ;  i++)
+	{
+		cout << fParList[i] << "\t" ;
+	}
+	cout << endl;
 
-  bool iPower = false;
+	bool iPower = false;
 
-  for (ushort ch = 0; ch < fNCh; ch++)
-    {
-
-      for (int i = 0; i < fNParList ; i++)
+	for (ushort ch = 0; ch < fNCh; ch++)
 	{
 
-	  // IMon gives a read error?
-	  // Need to think why...
-	  // Maybe we need power to measure the Current?
-	  if ( strcmp(fParList[i], "IMon" ) == 0 )
-	    {
-	      //cout << "IMon," <<  fParList[i] << endl;
-	      //if (!iPower)
-	      //{
-	      cout << "N/A\t";
-	      continue;
-	      //}
-	    }
+		for (int i = 0; i < fNParList ; i++)
+		{
+
+			// IMon gives a read error?
+			// Need to think why...
+			// Maybe we need power to measure the Current?
+			if ( strcmp(fParList[i], "IMon" ) == 0 )
+			{
+				//cout << "IMon," <<  fParList[i] << endl;
+				//if (!iPower)
+				//{
+				cout << "N/A\t";
+				continue;
+				//}
+			}
 
 
-	  fRet = CAENHV_GetChParam(fHandle,
-				   0,
-				   fParList[i],
-				   1,
-				   &fCh[ch],
-				   &fvalues[i]);
+			fRet = CAENHV_GetChParam(fHandle,
+						0,
+						fParList[i],
+						1,
+						&fCh[ch],
+						&fvalues[i]);
 
 	  
-	  if (fRet != CAENHV_OK)
-	    {
-	      
-	      cout << "CAENHV_GetChParam: "
-		   << CAENHV_GetError(fHandle)
-		   << "(num. " << fRet << ")\n" ;
-	    }
+			if (fRet != CAENHV_OK)
+				{
+				
+				cout << "CAENHV_GetChParam: "
+				<< CAENHV_GetError(fHandle)
+				<< "(num. " << fRet << ")\n" ;
+				}
 	  
-	  // Check the power status
-	  if (strcmp (fParList[i] , "Pw")  == 0)
-	    {
-	      iPower = (bool)fvalues[i];
-	      cout << (bool)fvalues[i] << "\t";
-	      continue;
-	      //cout << "Checking Power : " << fvalues[i] <<  " " << iPower << endl;
+			// Check the power status
+			if (strcmp (fParList[i] , "Pw")  == 0)
+			{
+				iPower = (bool)fvalues[i];
+				cout << (bool)fvalues[i] << "\t";
+				continue;
+				//cout << "Checking Power : " << fvalues[i] <<  " " << iPower << endl;
 
-	    }
+			}
 	  
-	  cout << fvalues[i] << "\t";
-	  //cout << fParList[i] << " : " << fvalues[i] << endl;
-	}
-      cout << endl;
+			cout << fvalues[i] << "\t";
+			//cout << fParList[i] << " : " << fvalues[i] << endl;
+		}
+		cout << endl;
     }
 }
 
@@ -265,137 +258,141 @@ void HVCrate::PrintHVStatus()
 
 
 // Ramp up volages
+// Crate takes some time to ramp up to the requsted voltage
 bool HVCrate::RampUp(int nchannels, float *vtarget, int ch )
 {
-  // Current VMon
-  float *VMon = new float[nchannels];
-  bool bSet = false;
+	// Current VMon
+	float *VMon = new float[nchannels];
+	bool bSet = false;
 
-  // Set the target values
-  if (nchannels == 1)
-    {
-      SetChannelParameter(ch, "Pw", 1);
-      SetChannelParameter(ch, "VSet", vtarget[0]);
-
-      while (bSet == false)
+	// Set the target values
+	if (nchannels == 1)
 	{
-	  VMon[0] = GetChannelParameter(ch, "VMon");
+		SetChannelParameter(ch, "Pw", 1);
+		SetChannelParameter(ch, "VSet", vtarget[0]);
 
-	  if (fabs(VMon[0] - vtarget[0]) < 1)
-	    {
-	      bSet = true;
-	    }
-	  else
-	    {
-	      cout << "Channel: " << ch
-		   << ", VSet: " << vtarget[0]
-		   << ", VMon: " << VMon[0] << endl;
-	      
-	      sleep(0.1);
-	    }
-	}
-    }
-
-  else
-    {
-      for (int i = 0; i < nchannels; i++)
-	{
-	  SetChannelParameter(i, "Pw", 1);
-	  SetChannelParameter(i, "VSet", vtarget[i] );
-	}
-
-      while (bSet == false)
-	{
-	  for (int i = 0; i < nchannels; i++)
-	    {
-	      VMon[i] = GetChannelParameter(i, "VMon");
-	      
-	      if (fabs(VMon[i] - vtarget[i]) < 1)
+		while (bSet == false)
 		{
-		  bSet = true;
-		}
-	      else
-		{
-		  bSet = false;
-		  cout << "Channel: " << i
-		       << ", VSet: " << vtarget[i]
-		       << ", VMon: " << VMon[i] << endl;
+			VMon[0] = GetChannelParameter(ch, "VMon");
+			// Tolerance of 1 V. For 1 kV this is .1%
+			if (fabs(VMon[0] - vtarget[0]) < 1)
+			{
+				bSet = true;
+			}
+			// Print the current status for the user
+			else
+			{
+				cout << "Channel: " << ch
+				<< ", VSet: " << vtarget[0]
+				<< ", VMon: " << VMon[0] << endl;
 
-		  sleep(0.1);
-		  continue;
+				sleep(0.1);
+			}
 		}
-	    }
-	}      
-    }
-  return bSet;
+	}
+	// Loop over each channel when setting voltage
+	else
+	{
+		for (int i = 0; i < nchannels; i++)
+		{
+			SetChannelParameter(i, "Pw", 1);
+			SetChannelParameter(i, "VSet", vtarget[i] );
+		}
+
+		while (bSet == false)
+		{
+			for (int i = 0; i < nchannels; i++)
+			{
+				VMon[i] = GetChannelParameter(i, "VMon");
+
+				if (fabs(VMon[i] - vtarget[i]) < 1)
+				{
+					bSet = true;
+				}
+				else
+				{
+					bSet = false;
+					cout << "Channel: " << i
+						<< ", VSet: " << vtarget[i]
+						<< ", VMon: " << VMon[i] << endl;
+
+					sleep(0.1);
+					// Break will abort check loop on first false
+					// Require all channels to reach tolerance level
+					break;
+				}
+			}
+		}      
+	}
+	return bSet;
 }
 
 // Ramp up volages
 bool HVCrate::RampUp(int nchannels, float *vtarget, unsigned short* ch )
 {
-  // Current VMon
-  float *VMon = new float[nchannels];
-  bool bSet = false;
+	// Current VMon
+	float *VMon = new float[nchannels];
+	bool bSet = false;
 
-  // Set the target values
-  if (nchannels == 1)
-    {
-      SetChannelParameter(ch[0], "Pw", 1);
-      SetChannelParameter(ch[0], "VSet", vtarget[0]);
-
-      while (bSet == false)
+	// Set the target values
+	if (nchannels == 1)
 	{
-	  VMon[0] = GetChannelParameter(ch[0], "VMon");
+		SetChannelParameter(ch[0], "Pw", 1);
+		SetChannelParameter(ch[0], "VSet", vtarget[0]);
 
-	  if (fabs(VMon[0] - vtarget[0]) < 1)
-	    {
-	      bSet = true;
-	    }
-	  else
-	    {
-	      cout << "Channel: " << ch[0]
-		   << ", VSet: " << vtarget[0]
-		   << ", VMon: " << VMon[0] << endl;
-	      
-	      sleep(0.1);
-	    }
-	}
-    }
+		while (bSet == false)
+		{
+			VMon[0] = GetChannelParameter(ch[0], "VMon");
 
-  else
-    {
-      for (int i = 0; i < nchannels; i++)
-	{
-	  SetChannelParameter(ch[i], "Pw", 1);
-	  SetChannelParameter(ch[i], "VSet", vtarget[i] );
+			if (fabs(VMon[0] - vtarget[0]) < 1)
+			{
+				bSet = true;
+			}
+			else
+			{
+				cout << "Channel: " << ch[0]
+				<< ", VSet: " << vtarget[0]
+				<< ", VMon: " << VMon[0] << endl;
+
+				sleep(0.1);
+			}
+		}
 	}
 
-      while (bSet == false)
+	else
 	{
-	  for (int i = 0; i < nchannels; i++)
-	    {
-	      VMon[i] = GetChannelParameter(ch[i], "VMon");
-	      
-	      if (fabs(VMon[i] - vtarget[i]) < 1)
+		for (int i = 0; i < nchannels; i++)
 		{
-		  bSet = true;
+			SetChannelParameter(ch[i], "Pw", 1);
+			SetChannelParameter(ch[i], "VSet", vtarget[i] );
 		}
-	      else
+
+		while (bSet == false)
 		{
-		  bSet = false;
-		  if (fDebug)
-		    {
-		      cout << "Channel: " << ch[i]
-			   << ", VSet: " << vtarget[i]
-			   << ", VMon: " << VMon[i] << endl;
-		    }
-		  sleep(0.1);
-		  continue;
-		}
-	    }
-	}      
-    }
-  return bSet;
+			for (int i = 0; i < nchannels; i++)
+			{
+				VMon[i] = GetChannelParameter(ch[i], "VMon");
+
+				if (fabs(VMon[i] - vtarget[i]) < 1)
+				{
+					bSet = true;
+				}
+				else
+				{
+					bSet = false;
+					if (fDebug)
+					{
+						cout << "Channel: " << ch[i]
+						<< ", VSet: " << vtarget[i]
+						<< ", VMon: " << VMon[i] << endl;
+					}
+					sleep(0.1);
+					continue;
+				}
+			}
+		}      
+	}
+	return bSet;
 }
 
 
@@ -403,180 +400,180 @@ bool HVCrate::RampUp(int nchannels, float *vtarget, unsigned short* ch )
 // Power off channels
 bool HVCrate::PowerOff(int nchannels, int ch )
 {
-  // Current VMon
-  float *VMon = new float[nchannels];
-  float *vtarget = new float[nchannels];
-  bool bSet = false;
+	// Current VMon
+	float *VMon = new float[nchannels];
+	float *vtarget = new float[nchannels];
+	bool bSet = false;
 
-  // Set the target values
-  if (nchannels == 1)
-    {
-      vtarget[0] = 0;
-      SetChannelParameter(ch, "Pw", 1);
-      SetChannelParameter(ch, "VSet", vtarget[0]);
-
-      while (bSet == false)
+	// Set the target values
+	if (nchannels == 1)
 	{
-	  VMon[0] = GetChannelParameter(ch, "VMon");
+		vtarget[0] = 0;
+		SetChannelParameter(ch, "Pw", 1);
+		SetChannelParameter(ch, "VSet", vtarget[0]);
 
-	  if (fabs(VMon[0] - vtarget[0]) < 10.)
-	    {
-	      bSet = true;
-	    }
-	  else
-	    {
-	      cout << "Channel: " << ch
-		   << ", VSet: " << vtarget[0]
-		   << ", VMon: " << VMon[0] << endl;
-	      
-	      sleep(0.1);
-	    }
-	}
-      // Power off channel
-      SetChannelParameter(ch, "Pw", 0);
-      return bSet;
-    }
-
-  else
-    {
-      for (int i = 0; i < nchannels; i++)
-	{
-	  vtarget[i] = 0;
-	  SetChannelParameter(i, "Pw", 1);
-	  SetChannelParameter(i, "VSet", vtarget[i] );
-	}
-      while (bSet == false)
-	{
-	  for (int i = 0; i < nchannels; i++)
-	    {
-	      VMon[i] = GetChannelParameter(i, "VMon");
-
-	      // Slower ramp down
-	      // Volage tends to hang at ~1.1V
-	      // Send pwr off at <1.5V
-	      if (fabs(VMon[i] - vtarget[i]) < 10.)
+		while (bSet == false)
 		{
-		  bSet = true;
+			VMon[0] = GetChannelParameter(ch, "VMon");
+
+			if (fabs(VMon[0] - vtarget[0]) < 10.)
+			{
+				bSet = true;
+			}
+			else
+			{
+				cout << "Channel: " << ch
+				<< ", VSet: " << vtarget[0]
+				<< ", VMon: " << VMon[0] << endl;
+
+				sleep(0.1);
+			}
 		}
-	      else
-		{
-		  bSet = false;
-		  if (fDebug)
-		    {
-		      
-		      cout << "Channel: " << i
-			   << ", VSet: " << vtarget[i]
-			   << ", VMon: " << VMon[i] << endl;
-		    }
-		  // 5 second sleep
-		  // Takes longer to power down
-		  sleep(5);
-		  continue;
-		}
-	    }
+		// Power off channel
+		SetChannelParameter(ch, "Pw", 0);
+		return bSet;
 	}
 
-      // Power off channels
-      cout << "Turning off Channels" << endl;
-      for (int i = 0; i < nchannels; i++)
+	else
 	{
-	  SetChannelParameter(i, "Pw", 0);
-	  sleep (1);
-	  bool bOff = (bool)GetChannelParameter(i, "Pw");
-	  cout << "Ch: " << i << " " << bOff << endl;
-	}
-      return bSet;
+		for (int i = 0; i < nchannels; i++)
+		{
+			vtarget[i] = 0;
+			SetChannelParameter(i, "Pw", 1);
+			SetChannelParameter(i, "VSet", vtarget[i] );
+		}
+		while (bSet == false)
+		{
+			for (int i = 0; i < nchannels; i++)
+			{
+				VMon[i] = GetChannelParameter(i, "VMon");
 
-    }  
+				// Slower ramp down
+				// Volage tends to hang at ~1.1V
+				// Send pwr off at <1.5V
+				if (fabs(VMon[i] - vtarget[i]) < 10.)
+				{
+					bSet = true;
+				}
+				else
+				{
+					bSet = false;
+					if (fDebug)
+					{
+
+					cout << "Channel: " << i
+					<< ", VSet: " << vtarget[i]
+					<< ", VMon: " << VMon[i] << endl;
+					}
+				// 5 second sleep
+				// Takes longer to power down
+				sleep(5);
+				continue;
+				}
+			}
+		}
+
+		// Power off channels
+		cout << "Turning off Channels" << endl;
+		for (int i = 0; i < nchannels; i++)
+		{
+			SetChannelParameter(i, "Pw", 0);
+			sleep (1);
+			bool bOff = (bool)GetChannelParameter(i, "Pw");
+			cout << "Ch: " << i << " " << bOff << endl;
+		}
+		return bSet;
+
+	}  
 }
 
 // Power off Specific Channels
 bool HVCrate::PowerOff(int nchannels, unsigned short* ch )
 {
-  // Current VMon
-  float *VMon = new float[nchannels];
-  float *vtarget = new float[nchannels];
-  bool bSet = false;
+	// Current VMon
+	float *VMon = new float[nchannels];
+	float *vtarget = new float[nchannels];
+	bool bSet = false;
 
-  // Set the target values
-  if (nchannels == 1)
-    {
-      vtarget[0] = 0;
-      SetChannelParameter(ch[0], "Pw", 1);
-      SetChannelParameter(ch[0], "VSet", vtarget[0]);
-
-      while (bSet == false)
+	// Set the target values
+	if (nchannels == 1)
 	{
-	  VMon[0] = GetChannelParameter(ch[0], "VMon");
+		vtarget[0] = 0;
+		SetChannelParameter(ch[0], "Pw", 1);
+		SetChannelParameter(ch[0], "VSet", vtarget[0]);
 
-	  if (fabs(VMon[0] - vtarget[0]) < 1)
-	    {
-	      bSet = true;
-	    }
-	  else
-	    {
-	      if (fDebug)
+		while (bSet == false)
 		{
-		  cout << "Channel: " << ch[0]
-		       << ", VSet: " << vtarget[0]
-		       << ", VMon: " << VMon[0] << endl;
+			VMon[0] = GetChannelParameter(ch[0], "VMon");
+
+			if (fabs(VMon[0] - vtarget[0]) < 1)
+			{
+				bSet = true;
+			}
+			else
+			{
+				if (fDebug)
+				{
+				cout << "Channel: " << ch[0]
+				<< ", VSet: " << vtarget[0]
+				<< ", VMon: " << VMon[0] << endl;
+				}
+				sleep(1);
+			}
 		}
-	      sleep(1);
-	    }
+		// Power off channel
+		SetChannelParameter(ch[0], "Pw", 0);
+		return bSet;
 	}
-      // Power off channel
-      SetChannelParameter(ch[0], "Pw", 0);
-      return bSet;
-    }
 
-  else
-    {
-      for (int i = 0; i < nchannels; i++)
+	else
 	{
-	  vtarget[i] = 0;
-	  SetChannelParameter(ch[i], "Pw", 1);
-	  SetChannelParameter(ch[i], "VSet", vtarget[i] );
-	}
-      while (bSet == false)
-	{
-	  for (int i = 0; i < nchannels; i++)
-	    {
-	      VMon[i] = GetChannelParameter(ch[i], "VMon");
-
-	      // Slower ramp down
-	      // Volage tends to hang at ~1.1V
-	      // Send pwr off at <1.5V
-	      if (fabs(VMon[i] - vtarget[i]) < 1.5)
+		for (int i = 0; i < nchannels; i++)
 		{
-		  bSet = true;
+			vtarget[i] = 0;
+			SetChannelParameter(ch[i], "Pw", 1);
+			SetChannelParameter(ch[i], "VSet", vtarget[i] );
 		}
-	      else
+		while (bSet == false)
 		{
-		  bSet = false;
-		  cout << "Channel: " << ch[i]
-		       << ", VSet: " << vtarget[i]
-		       << ", VMon: " << VMon[i] << endl;
+			for (int i = 0; i < nchannels; i++)
+			{
+				VMon[i] = GetChannelParameter(ch[i], "VMon");
 
-		  // 5 second sleep
-		  // Takes longer to power down
-		  sleep(5);
-		  continue;
+				// Slower ramp down
+				// Volage tends to hang at ~1.1V
+				// Send pwr off at <1.5V
+				if (fabs(VMon[i] - vtarget[i]) < 1.5)
+				{
+					bSet = true;
+				}
+				else
+				{
+					bSet = false;
+					cout << "Channel: " << ch[i]
+					<< ", VSet: " << vtarget[i]
+					<< ", VMon: " << VMon[i] << endl;
+
+					// 5 second sleep
+					// Takes longer to power down
+					sleep(5);
+					continue;
+				}
+			}
 		}
-	    }
-	}
 
-      // Power off channels
-      cout << "Turning off Channels" << endl;
-      for (int i = 0; i < nchannels; i++)
-	{
-	  SetChannelParameter(ch[i], "Pw", 0);
-	  sleep (2);
-	  bool bOff = (bool)GetChannelParameter(ch[i], "Pw");
-	  cout << "Ch: " << ch[i] << " " << bOff << endl;
-	}
-      return bSet;
+		// Power off channels
+		cout << "Turning off Channels" << endl;
+		for (int i = 0; i < nchannels; i++)
+		{
+			SetChannelParameter(ch[i], "Pw", 0);
+			sleep (2);
+			bool bOff = (bool)GetChannelParameter(ch[i], "Pw");
+			cout << "Ch: " << ch[i] << " " << bOff << endl;
+		}
+		return bSet;
 
-    }  
+	}  
 }
 
 
@@ -590,25 +587,9 @@ void HVCrate::PowerOffAll()
 HVCrate::~HVCrate()
 {
 
-  // Clear vector
-  //cout << "Clearing Vector" << endl;
-
-  /*
-  for (int i = 0; i < fParList.size(); i++)
-    {
-      delete fParList[i];
-    }
-  */
   fParList.clear();
-  //cout << "Done" << endl;
-
-  //cout << "Deleting fConnString" << endl;
-  //delete fConnString;
-  //cout << "Deleting fPort" << endl;
   delete[] fPort;
-  //cout << "Deleting fCh" << endl;
   delete[] fCh;
-  //cout << "Done" << endl;
 
   // Shut the connection
   CAENHV_DeinitSystem(fHandle);
